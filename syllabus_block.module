@@ -1,0 +1,36 @@
+<?php 
+/**
+ * @file
+ * syllabus_block.module
+ *
+ * @author Luc Morin <lmori4@uottawa.ca>
+ * @copyright 2012 University of Ottawa.
+ * @license Copyright (c) 2012 All rights reserved
+ */
+
+/**
+ * Implements hook_block_info().
+ */
+function syllabus_block_block_info() {
+  $blocks['syllabus_pending'] = array(
+    'info' => t('Syllabus the Prof has to finish creating still.'),
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function syllabus_block_block_view($delta = 0) {
+  switch ($delta) {
+    case 'syllabus_pending':
+      module_load_include('inc', 'syllabus_block', 'syllabus_block.block');
+      $block = array(
+        'subject' => t('Syllabus Allowed to create'),
+        'content' => drupal_get_form('syllabus_pending_form'),
+      );
+      break;
+  }
+  return $block;
+}
+

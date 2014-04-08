@@ -1,0 +1,9 @@
+name = Syllabus Block
+description = Custom blocks for the syllabus Application.
+core = 7.x
+package = Syllabus
+
+; Dependencies
+dependencies[] = syllabus_form
+dependencies[] = og
+
