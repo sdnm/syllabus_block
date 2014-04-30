@@ -31,15 +31,10 @@ function syllabus_pending_form($form, &$form_state) {
   //Perform a EFQ to see if the syllabus has a published syllabus
   foreach ($entities as $entity) {
     if (in_array($entity->session_cd, array_keys($sessions))) {
-      $three_letter = substr($entity->course_cd, 0, 3);
-      $four_number = substr($entity->course_cd, 3, 4);
-   
       $query = new EntityFieldQuery();
       $query->entityCondition('entity_type', 'node')
         ->entityCondition('bundle', 'syllabus')
-        ->propertyCondition('status', 1)
-        ->fieldCondition('field_3_letter_course_code', 'value', $three_letter, '=')
-        ->fieldCondition('field_4_number_course_code', 'value', $four_number, '=')
+        ->fieldCondition('field_course_code', 'value', $entity->course_cd, '=')
         ->fieldCondition('field_session', 'value', $entity->session_cd, '=')
         ->fieldCondition('field_section', 'value', $entity->section_cd, '=');
       $result = $query->execute();
@@ -65,6 +60,7 @@ function syllabus_pending_form($form, &$form_state) {
  */
 function syllabus_mine_form($form, &$form_state) {
   global $user;
+  $result = array();
   //Load his groups
   $groups = og_get_groups_by_user();
   $entities = entity_load('academic_activity', $groups['academic_activity']);
@@ -74,27 +70,26 @@ function syllabus_mine_form($form, &$form_state) {
         ->entityCondition('bundle', 'syllabus')
         ->propertyCondition('uid', $user->uid);
   $nodes = $query->execute();
-  $nodes = $nodes['node'];
+  if (isset($nodes['node'])) {
+    $nodes = $nodes['node'];
 
-  foreach ($entities as $entity) {
-    $three_letter = substr($entity->course_cd, 0, 3);
-    $four_number = substr($entity->course_cd, 3, 4);
-    $query = new EntityFieldQuery();
-    $query->entityCondition('entity_type', 'node')
-          ->entityCondition('bundle', 'syllabus')
-          ->fieldCondition('field_3_letter_course_code', 'value', $three_letter, '=')
-          ->fieldCondition('field_4_number_course_code', 'value', $four_number, '=')
-          ->fieldCondition('field_session', 'value', $entity->session_cd, '=')
-          ->fieldCondition('field_section', 'value', $entity->section_cd, '=');
-    $result = $query->execute();
-    //If its empty create a link.
-    if (!empty($result)) {
-      $nodes = array_merge($nodes, $result['node']); 
+    foreach ($entities as $entity) {
+      $query = new EntityFieldQuery();
+      $query->entityCondition('entity_type', 'node')
+            ->entityCondition('bundle', 'syllabus')
+            ->fieldCondition('field_course_code', 'value', $entity->course_cd, '=')
+            ->fieldCondition('field_session', 'value', $entity->session_cd, '=')
+            ->fieldCondition('field_section', 'value', $entity->section_cd, '=');
+      $result = $query->execute();
+      //If its empty create a link.
+      if (!empty($result)) {
+        $nodes = array_merge($nodes, $result['node']); 
+      }
     }
-  }
-  $result = array();
-  foreach($nodes as $node) {
-    $result[$node->nid] = $node;
+    $result = array();
+    foreach($nodes as $node) {
+      $result[$node->nid] = $node;
+    }
   }
 
   $form['legend_draft'] = array(
@@ -113,19 +108,13 @@ function syllabus_mine_form($form, &$form_state) {
     '#markup' => t('Public, Syllabus is publically searchable.'),
   );
 
-  $form['pending_list'] = array(
-    '#prefix' => '<ul>',
-    '#markup' => '',
-    '#suffix' => '</ul>',
-  );
   foreach ($result as $key => $value) {
     $node = node_load($key);
     if (!empty($node)) {
       global $language;
       $mode = '';
       $title = '';
-      $title .= $node->field_3_letter_course_code[LANGUAGE_NONE][0]['value'];
-      $title .= $node->field_4_number_course_code[LANGUAGE_NONE][0]['value'];
+      $title .= $node->field_course_code[LANGUAGE_NONE][0]['value'];
       $title .= '-';
       $title .= $node->field_section[LANGUAGE_NONE][0]['value'];
       $title .= ' ';
@@ -148,20 +137,97 @@ function syllabus_mine_form($form, &$form_state) {
           $title .= $node->field_session[LANGUAGE_NONE][0]['value'];
         }
       }
-      $title .= ' ';
+      $status = '';
       if ($node->status == '0') {
-        $title .= t('(Draft)');
+        $status = t('Draft');
       }
-      elseif($node->status == '1') {
-        $title .= t('(Published)');
+      elseif ($node->status == '1') {
+        $status = t('Published');
       }
-      elseif(!empty($node->field_public)) {
-        $title .= t('(Public)');
+      if ($node->field_public[LANGUAGE_NONE][0]['value'] == 1) {
+        $status = t('Public');
       }
-      $form['pending_list']['#markup'] .= '<li>' ;
-      $form['pending_list']['#markup'] .= l($title, 'syllabus/' . $node->nid);
-      $form['pending_list']['#markup'] .= '</li>';
+      $form['syllabus_' . $node->nid] = array(
+        '#type' => 'fieldset', 
+        '#title' => t(''), 
+        '#collapsible' => FALSE, 
+        '#collapsed' => FALSE,
+      );
+      //Link to the node.
+      $form['syllabus_' . $node->nid]['link'] = array(
+        '#markup' => l($title, 'syllabus/' . $node->nid),
+      );
+      //Status.
+      $form['syllabus_' . $node->nid]['status'] = array(
+        '#markup' => '&nbsp;' . $status,
+      );
+      //Buttons
+      if ($node->status == 1) {
+        $form['syllabus_' . $node->nid]['publish'] = array(
+          '#type' => 'submit', 
+          '#value' => t('unpublish'),
+          '#name' => $node->nid
+        );
+      }
+      else {
+        $form['syllabus_' . $node->nid]['publish'] = array(
+          '#type' => 'submit', 
+          '#value' => t('publish'),
+          '#name' => $node->nid
+        );
+      }
+      if ($node->field_public[LANGUAGE_NONE][0]['value'] == 1) {
+        $form['syllabus_' . $node->nid]['public'] = array(
+          '#type' => 'submit', 
+          '#value' => t('unpublic'),
+          '#name' => $node->nid
+        );
+      }
+      else {
+        $form['syllabus_' . $node->nid]['public'] = array(
+          '#type' => 'submit', 
+          '#value' => t('public'),
+          '#name' => $node->nid
+        );
+      }
     }
   }
   return $form;
+}
+
+/**
+ * Implements hook_form_submit().
+ */
+function syllabus_mine_form_submit($form, &$form_state) {
+  $node = array();
+  $matches = array();
+  preg_match('/edit-publish/', $form_state['clicked_button']['#id'], $matches);
+  if (isset($matches[0]) && $matches[0] == 'edit-publish') {
+    $node = node_load($form_state['clicked_button']['#name']);
+    if ($node->status) {
+      //unpublish, also unset the public flag.
+      $node->status = 0;
+      $node->field_public[LANGUAGE_NONE][0]['value'] = 0;
+    }
+    else {
+      //Publish.
+      $node->status = 1;
+    }    
+  }
+  preg_match('/edit-public/', $form_state['clicked_button']['#id'], $matches);
+  if (isset($matches[0]) && $matches[0] == 'edit-public') {
+    $node = node_load($form_state['clicked_button']['#name']);
+    if ($node->field_public[LANGUAGE_NONE][0]['value']) {
+      //unpublic the syllabus
+      $node->field_public[LANGUAGE_NONE][0]['value'] = 0;
+    }
+    else {
+      //Publish.
+      $node->status = 1;
+      $node->field_public[LANGUAGE_NONE][0]['value'] = 1;
+    }    
+  }
+  if (!empty($node)) {
+    node_save($node);
+  }
 }
