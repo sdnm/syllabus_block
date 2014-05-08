@@ -36,7 +36,7 @@ function syllabus_block_block_view($delta = 0) {
     case 'syllabus_current':
       module_load_include('inc', 'syllabus_block', 'syllabus_block.block');
       $block = array(
-        'subject' => t('My syllabi'),
+        'subject' => t('My Syllabi'),
         'content' => drupal_get_form('syllabus_mine_form'),
       );
       break;

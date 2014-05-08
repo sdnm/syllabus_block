@@ -22,7 +22,6 @@ function syllabus_pending_form($form, &$form_state) {
   $entities = entity_load('academic_activity', $groups['academic_activity']);
   //Fetch the sessions 
   $sessions = syllabus_api_fetch_sessions();
-
   $form['pending_list'] = array(
     '#prefix' => '<ul>',
     '#markup' => '',
@@ -162,20 +161,6 @@ function syllabus_mine_form($form, &$form_state) {
         '#markup' => '&nbsp;' . $status,
       );
       //Buttons
-      if ($node->status == 1) {
-        $form['syllabus_' . $node->nid]['publish'] = array(
-          '#type' => 'submit', 
-          '#value' => t('unpublish'),
-          '#name' => $node->nid
-        );
-      }
-      else {
-        $form['syllabus_' . $node->nid]['publish'] = array(
-          '#type' => 'submit', 
-          '#value' => t('publish'),
-          '#name' => $node->nid
-        );
-      }
       if ($node->field_public[LANGUAGE_NONE][0]['value'] == 1) {
         $form['syllabus_' . $node->nid]['public'] = array(
           '#type' => 'submit', 
@@ -187,6 +172,20 @@ function syllabus_mine_form($form, &$form_state) {
         $form['syllabus_' . $node->nid]['public'] = array(
           '#type' => 'submit', 
           '#value' => t('public'),
+          '#name' => $node->nid
+        );
+      }
+      if ($node->status == 1) {
+        $form['syllabus_' . $node->nid]['publish'] = array(
+          '#type' => 'submit', 
+          '#value' => t('unpublish'),
+          '#name' => $node->nid
+        );
+      }
+      else {
+        $form['syllabus_' . $node->nid]['publish'] = array(
+          '#type' => 'submit', 
+          '#value' => t('publish'),
           '#name' => $node->nid
         );
       }
