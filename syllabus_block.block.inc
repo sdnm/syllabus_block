@@ -66,8 +66,7 @@ function syllabus_mine_form($form, &$form_state) {
   //Load his previous nodes
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
-        ->entityCondition('bundle', 'syllabus')
-        ->propertyCondition('uid', $user->uid);
+        ->entityCondition('bundle', 'syllabus');
   $nodes = $query->execute();
   if (isset($nodes['node'])) {
     $nodes = $nodes['node'];
