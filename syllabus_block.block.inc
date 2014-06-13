@@ -37,7 +37,14 @@ function syllabus_pending_form($form, &$form_state) {
         ->fieldCondition('field_session', 'value', $entity->session_cd, '=')
         ->fieldCondition('field_section', 'value', $entity->section_cd, '=');
       $result = $query->execute();
-      if (empty($result)) {
+      //Put this in place to fix a weird issue with node existing but not contatining content.
+      $node = '';
+      if (isset($result['node'])) {
+        $x = reset($result['node']);
+        $node = entity_load_single('node', $x->nid);
+      }
+
+      if (empty($node)) {
         $response = restclient_get('session/' . $entity->session_cd);
         $xml = _syllabus_api_parse_xml($response->data);
         if ($language->language == 'fr') {
@@ -62,30 +69,34 @@ function syllabus_mine_form($form, &$form_state) {
   $result = array();
   //Load his groups
   $groups = og_get_groups_by_user();
-  $entities = entity_load('academic_activity', $groups['academic_activity']);
+  $syllabus_groups = entity_load('academic_activity', $groups['academic_activity']);
   //Load his previous nodes
   $query = new EntityFieldQuery();
   $query->entityCondition('entity_type', 'node')
-        ->entityCondition('bundle', 'syllabus');
+        ->entityCondition('bundle', 'syllabus')
+        ->propertyCondition('uid', $user->uid);
   $nodes = $query->execute();
+  //Also load his group syllabuses. 
   if (isset($nodes['node'])) {
-    $nodes = $nodes['node'];
-
-    foreach ($entities as $entity) {
-      $query = new EntityFieldQuery();
-      $query->entityCondition('entity_type', 'node')
-            ->entityCondition('bundle', 'syllabus')
-            ->fieldCondition('field_course_code', 'value', $entity->course_cd, '=')
-            ->fieldCondition('field_session', 'value', $entity->session_cd, '=')
-            ->fieldCondition('field_section', 'value', $entity->section_cd, '=');
-      $result = $query->execute();
-      //If its empty create a link.
-      if (!empty($result)) {
-        $nodes = array_merge($nodes, $result['node']); 
-      }
+    foreach($nodes['node'] as $node) {
+      $result[$node->nid] = $node;
     }
-    $result = array();
-    foreach($nodes as $node) {
+  }
+
+  foreach ($syllabus_groups as $group) {
+    $query = new EntityFieldQuery();
+    $query->entityCondition('entity_type', 'node')
+          ->entityCondition('bundle', 'syllabus')
+          ->fieldCondition('field_course_code', 'value', $group->course_cd, '=')
+          ->fieldCondition('field_session', 'value', $group->session_cd, '=')
+          ->fieldCondition('field_section', 'value', $group->section_cd, '=');
+    $course_node = $query->execute();
+    $node = '';
+    if (isset($course_node['node'])) {
+      $course_node = reset($course_node['node']);
+      $node = entity_load_single('node', $course_node->nid);
+    }
+    if (!empty($node)) {
       $result[$node->nid] = $node;
     }
   }
