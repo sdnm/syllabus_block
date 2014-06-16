@@ -9,6 +9,36 @@
  */
 
 /**
+ * Implements hook_permission().
+ */
+function syllabus_block_permission() {
+  return array(
+    'search public syllabus' => array(
+      'title' => t('Access the search result page.'),
+      'description' => t('Acces the search result page for the public syllabus.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function syllabus_block_menu() {
+  $items = array();
+
+  $items['search_result'] = array(
+    'title' => 'Search result', 
+    'description' => 'Search result page', 
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('syllabus_block_search_result_form'),
+    'access arguments' => array('search public syllabus'), 
+    'file' => 'syllabus_block.form.inc',
+  );
+  return $items;
+}
+
+
+/**
  * Implements hook_block_info().
  */
 function syllabus_block_block_info() {
@@ -17,6 +47,9 @@ function syllabus_block_block_info() {
   );
   $blocks['syllabus_current'] = array(
     'info' => t('Syllabi the prof has currently started/finished and published.'),
+  );
+  $blocks['syllabus_search'] = array(
+    'info' => t('Search for a public syllabus.'),
   );
   return $blocks;
 }
@@ -38,6 +71,13 @@ function syllabus_block_block_view($delta = 0) {
       $block = array(
         'subject' => t('My Syllabi'),
         'content' => drupal_get_form('syllabus_mine_form'),
+      );
+      break;
+    case 'syllabus_search':
+      module_load_include('inc', 'syllabus_block', 'syllabus_block.block');
+      $block = array(
+        'subject' => t('Search for a Syllabus'),
+        'content' => drupal_get_form('syllabus_search_form'),
       );
       break;
   }

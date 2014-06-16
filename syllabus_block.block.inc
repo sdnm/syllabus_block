@@ -240,3 +240,70 @@ function syllabus_mine_form_submit($form, &$form_state) {
     node_save($node);
   }
 }
+
+
+/**
+ * Implements hook_form().
+ */
+function syllabus_search_form($form, &$form_state) {
+  global $language;
+  $sessions = array('0' => t('All'));
+  $form['course_code'] = array(
+    '#type' => 'textfield', 
+    '#title' => t('Course Code'), 
+    '#size' => 7,
+    '#description' => t('(e.g.: ADM1300)'),
+  );
+  
+  //Cache this result so we dont half to rebuild it everytime.
+  if (cache_get('syllabus_searchable_session')) {
+    $sessions = cache_get('syllabus_searchable_session');
+    $sessions = $sessions->data;
+  }
+  else {
+    $response = restclient_get('session');
+    $xml = _syllabus_api_parse_xml($response->data);
+    foreach ($xml['entityResult'] as $session) {
+      //Hard set date to no go into the past where nothing is there anyways.
+      //Also Remove the Infinity
+      if ($session['session_cd'] > '20139' && $session['session_cd'] != '99999' ) {
+        //Check the reason code to see if the session should be displayed.
+        $session_reason = restclient_get('session/' . $session['session_cd'] . '/reason/S09');
+        $reason_code = _syllabus_api_parse_xml($session_reason->data);
+        if (isset($reason_code['session_date_reason']) && strtotime($reason_code['session_date_reason']['ses_admin_start_dt']) < time()) {
+          if ($language->language == 'fr') {
+            $sessions[$session['session_cd']] = $session['ses_french_name'];
+          }
+          else {
+            $sessions[$session['session_cd']] = $session['ses_english_name'];
+          }
+        }
+      }
+    }
+    cache_set('syllabus_searchable_session', $sessions, 'cache', time() + 60*60);
+  }
+
+  $form['session'] = array(
+    '#type' => 'select',
+    '#title' => t('Session'),
+    '#options' => $sessions,
+  );
+  
+  $form['search'] = array(
+    '#type' => 'submit',
+    '#value' => t('Search'),
+    '#submit' => array('syllabus_search_form_submit'),
+  );
+  return $form;
+}
+
+/**
+ * Implements hook_form_submit().
+ */
+function syllabus_search_form_submit($form, &$form_state) {
+  //Redirect to the search result page.
+  $options = array();
+  $options['query'] = array('course_cd' => $form_state['values']['course_code'], 'session_cd' => $form_state['values']['session']);
+  drupal_goto('search_result', $options);
+}
+
