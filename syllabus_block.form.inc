@@ -22,6 +22,13 @@ function syllabus_block_search_result_form($form, $form_state) {
   $course_code = filter_xss($_GET['course_cd']);
   $session = filter_xss($_GET['session_cd']);
 
+  $form['title'] = array(
+    '#prefix' => '<h1 class="block__title block-title">',
+    '#markup' => t('Search Result'),
+    '#suffix' => '</h1>',
+  );
+
+
   module_load_include('inc', 'syllabus_block', 'syllabus_block.block');
   $form = syllabus_search_form($form, $form_state);
   //Set the defaults,

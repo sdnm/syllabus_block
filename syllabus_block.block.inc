@@ -290,9 +290,11 @@ function syllabus_search_form($form, &$form_state) {
   );
   
   $form['search'] = array(
+    '#prefix' => '<div id="edit-actions" class="form-actions form-wrapper">',
     '#type' => 'submit',
     '#value' => t('Search'),
     '#submit' => array('syllabus_search_form_submit'),
+    '#suffix' => '</div>',
   );
   return $form;
 }
