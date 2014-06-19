@@ -15,10 +15,7 @@ function syllabus_pending_form($form, &$form_state) {
   global $language; 
   module_load_include('inc', 'syllabus_api', 'syllabus_api.session');
   $groups = og_get_groups_by_user();
-  //List the syllabuses that the prof has still not published a syllabus for.
-  $form['pending_text'] = array(
-    '#markup' => t('Here is a list of the pending syllabi.'),
-  );
+
   $entities = entity_load('academic_activity', $groups['academic_activity']);
   //Fetch the sessions 
   $sessions = syllabus_api_fetch_sessions();
@@ -57,6 +54,11 @@ function syllabus_pending_form($form, &$form_state) {
       }
     }
   }
+
+  //List the syllabuses that the prof has still not published a syllabus for.
+  $form['pending_text'] = array(
+    '#markup' => t('A list of pending course syllabu you still need to create.'),
+  );
   return $form;
 }
 
@@ -100,22 +102,6 @@ function syllabus_mine_form($form, &$form_state) {
       $result[$node->nid] = $node;
     }
   }
-
-  $form['legend_draft'] = array(
-    '#prefix' => '<div>',
-    '#suffix' => '</div>',
-    '#markup' => t('Draft, not published still in the process of being created.'),
-  );
-  $form['legend_published'] = array(
-    '#prefix' => '<div>',
-    '#suffix' => '</div>',
-    '#markup' => t('Published, Syllabus has been created and can be shared with student and professors.'),
-  );
-  $form['legend_public'] = array(
-    '#prefix' => '<div>',
-    '#suffix' => '</div>',
-    '#markup' => t('Public, Syllabus is publically searchable.'),
-  );
 
   foreach ($result as $key => $value) {
     $node = node_load($key);
@@ -201,6 +187,22 @@ function syllabus_mine_form($form, &$form_state) {
       }
     }
   }
+
+  $form['legend_draft'] = array(
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+    '#markup' => t('Draft, not published still in the process of being created.'),
+  );
+  $form['legend_published'] = array(
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+    '#markup' => t('Published, has been created and can be shared with student and professors only.'),
+  );
+  $form['legend_public'] = array(
+    '#prefix' => '<div>',
+    '#suffix' => '</div>',
+    '#markup' => t('Public, Has been created, and it publicly searchable.'),
+  );
   return $form;
 }
 
