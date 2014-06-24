@@ -51,6 +51,10 @@ function syllabus_block_block_info() {
   $blocks['syllabus_search'] = array(
     'info' => t('Search for a public syllabus.'),
   );
+  $blocks['language_switcher'] = array(
+    'info' => t('Syllabus Language Switcher'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
+  );
   return $blocks;
 }
 
@@ -80,6 +84,35 @@ function syllabus_block_block_view($delta = 0) {
         'content' => drupal_get_form('syllabus_search_form'),
       );
       break;
+    case 'language_switcher':
+        global $language;
+
+        $enabled_languages = language_list('enabled');
+        $enabled_languages = $enabled_languages[1];
+
+        // Generate the language link items
+        $items = array();
+        foreach ($enabled_languages as $enabled_language) {
+          if ($language->language != $enabled_language->language) {
+            $query = drupal_get_query_parameters();
+            $query['language'] = $enabled_language->language;
+            
+            $items[] = l(
+              $enabled_language->native,
+              current_path(),
+              array(
+                'language' => $enabled_language, // Set link language (to generate the translated path if it exists)
+                'query' => $query, // Set a get variable to change the language
+              )
+            );
+          }
+        }
+
+        $block['content'] = array(
+          '#theme' => 'item_list',
+          '#items' => $items,
+        );
+    break;
   }
   return $block;
 }
