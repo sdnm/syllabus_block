@@ -57,7 +57,7 @@ function syllabus_pending_form($form, &$form_state) {
 
   //List the syllabuses that the prof has still not published a syllabus for.
   $form['pending_text'] = array(
-    '#markup' => t('A list of pending course syllabu you still need to create.'),
+    '#markup' => '<div class="legend last">'. t('A list of pending course syllabi you still need to create.') . '</div>',
   );
   return $form;
 }
@@ -134,13 +134,13 @@ function syllabus_mine_form($form, &$form_state) {
       }
       $status = '';
       if ($node->status == '0') {
-        $status = t('Draft');
+        $status = t('draft');
       }
       elseif ($node->status == '1') {
-        $status = t('Published');
+        $status = t('published');
       }
       if ($node->field_public[LANGUAGE_NONE][0]['value'] == 1) {
-        $status = t('Public');
+        $status = t('public');
       }
       $form['syllabus_' . $node->nid] = array(
         '#type' => 'fieldset', 
@@ -154,7 +154,7 @@ function syllabus_mine_form($form, &$form_state) {
       );
       //Status.
       $form['syllabus_' . $node->nid]['status'] = array(
-        '#markup' => '&nbsp;' . $status,
+        '#markup' => '<span class="'. $status . '">' . $status . '</span>',
       );
       //Buttons
       if ($node->field_public[LANGUAGE_NONE][0]['value'] == 1) {
@@ -189,19 +189,19 @@ function syllabus_mine_form($form, &$form_state) {
   }
 
   $form['legend_draft'] = array(
-    '#prefix' => '<div>',
+    '#prefix' => '<div class="legend first">',
     '#suffix' => '</div>',
-    '#markup' => t('Draft, not published still in the process of being created.'),
+    '#markup' => '<span class="draft">'. t('Draft') . '</span>' . t(' Not published, still in the process of being created.'),
   );
   $form['legend_published'] = array(
-    '#prefix' => '<div>',
+    '#prefix' => '<div class="legend">',
     '#suffix' => '</div>',
-    '#markup' => t('Published, has been created and can be shared with student and professors only.'),
+    '#markup' => '<span class="published">'. t('Published') . '</span>' . t(' Has been created, and can be shared with students and professors only.'),
   );
   $form['legend_public'] = array(
-    '#prefix' => '<div>',
+    '#prefix' => '<div class="legend last">',
     '#suffix' => '</div>',
-    '#markup' => t('Public, Has been created, and it publicly searchable.'),
+    '#markup' => '<span class="public">'. t('Public') . '</span>' . t(' Has been created, and is publicly searchable.'),
   );
   return $form;
 }
